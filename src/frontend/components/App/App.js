@@ -1,4 +1,5 @@
 import React from 'react';
+import clsx from 'clsx';
 import './App.css';
 import NavBar from './components/NavBar';
 import Container from '@material-ui/core/Container';
@@ -8,14 +9,13 @@ import Link from '@material-ui/core/Link';
 import { useTheme } from '@material-ui/core/styles';
 import { useStyles } from './styles';
 
-const electron = window.require('electron');
-
-console.log(electron);
+// const electron = window.require('electron');
+// console.log(electron);
 
 const App = () => {
   const classes = useStyles();
   const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(true);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -27,14 +27,27 @@ const App = () => {
 
   return (
     <div className="App">
-      <NavBar classes={classes} open={open} setOpen={setOpen} />
-      <Container maxWidth="sm">
-        <Box my={4}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Create React App v4-beta example
-          </Typography>
-        </Box>
-      </Container>
+      <NavBar
+        classes={classes}
+        open={open}
+        setOpen={setOpen}
+        handleDrawerClose={handleDrawerClose}
+        handleDrawerOpen={handleDrawerOpen}
+      />
+      <main
+        className={clsx(classes.content, {
+          [classes.contentShift]: open,
+        })}
+      >
+        <div className={classes.drawerHeader} />
+        <Container maxWidth="sm">
+          <Box my={4}>
+            <Typography variant="h4" component="h1" gutterBottom align="center">
+              E R P
+            </Typography>
+          </Box>
+        </Container>
+      </main>
     </div>
   );
 }
