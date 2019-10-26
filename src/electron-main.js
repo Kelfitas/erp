@@ -2,10 +2,23 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const url = require('url');
+const fork = require('child_process').fork;
+const log = require('./lib/debug')('main');
+const { MSG_EXIT } = require('./constants/messages');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
+
+const forkProxy = () => {
+  const program = path.join(__dirname, 'proxy/index.js');
+  const parameters = [];
+  const options = {
+    // stdio: [ 'pipe', 'pipe', 'pipe', 'ipc' ],
+  };
+
+  return fork(program, parameters, options);
+};
 
 const createWindow = () => {
   // Create the browser window.
@@ -18,9 +31,15 @@ const createWindow = () => {
     }
   });
 
+  const child = forkProxy();
+  child.on('message', message => {
+    log('message from child:', message);
+    child.send('Pong');
+  });
+
   // and load the index.html of the app.
   const startUrl = process.env.ELECTRON_START_URL || url.format({
-    pathname: path.join(__dirname, 'frontend/build/index.html'),
+    pathname: path.join(__dirname, '..', '/build/index.html'),
     protocol: 'file:',
     slashes: true
   });
@@ -28,8 +47,15 @@ const createWindow = () => {
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
 
+  process.once('SIGTERM', function (code) {
+    log('SIGTERM received...');
+    child.send(MSG_EXIT);
+    process.exit();
+  });
+
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
+    child.send(MSG_EXIT);
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.

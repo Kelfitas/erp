@@ -4,11 +4,12 @@
   "description": "A minimal Electron application",
   "main": "src/electron-main.js",
   "scripts": {
-    "start": "BROWSER=none NODE_PATH=./src react-scripts start",
-    "build": "NODE_PATH=./src react-scripts build",
-    "test": "NODE_PATH=./src react-scripts test --env=jsdom",
-    "eject": "NODE_PATH=./src react-scripts eject",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject",
     "electron": "electron .",
+    "watch-electron": "nodemon --signal SIGTERM --exec electron .",
     "dev": "nf start -p 3001"
   },
   "repository": "https://github.com/electron/electron-quick-start",
@@ -31,8 +32,12 @@
     "@material-ui/core": "^4.5.1",
     "@material-ui/icons": "^4.5.1",
     "babel-loader": "^8.0.6",
+    "debug": "^4.1.1",
+    "nodemon": "^1.19.4",
+    "parse-headers": "^2.0.2",
     "react": "^16.10.2",
-    "react-dom": "^16.10.2"
+    "react-dom": "^16.10.2",
+    "uuid": "^3.3.3"
   },
   "browserslist": {
     "production": [
