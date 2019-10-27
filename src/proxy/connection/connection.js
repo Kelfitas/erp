@@ -12,6 +12,16 @@ const tlsServerOptions = {
   isServer: true,
 };
 
+class Data {
+  static const TYPE_IN = 0;
+  static const TYPE_OUT = 1;
+
+  constructor(data, type) {
+    this.data = data;
+    this.type = type;
+  }
+}
+
 class Connection {
   constructor(socket) {
     this.socket = socket;
@@ -43,34 +53,36 @@ class Connection {
   onMessage = (data) => {
     log("---PROXY- got message:", "\n" + data.toString());
     this.data.push(data);
-    if (this.data.length === 1) {
-      this.parseData(data);
-      this.connect();
-    } else {
-      this.eve.emit('data', data);
-    }
-    // this.buffer = Buffer.concat([this.buffer, data]);
+    this.parseRequest(data);
   }
 
-  parseData = (data) => {
-    const lines = data.toString().split('\r\n');
-    const statusLine = lines[0];
-    const [method, target, proto] = statusLine.split(' ');
-    this.method = method;
-    this.target = target;
-    this.proto = proto;
-    this.headers = parse(lines.filter((item, i) => i > 0 && !!item).join('\r\n'));
+  parseRequest = data => this.parseData(data, 'request');
+  parseResponse = data => this.parseData(data, 'response');
 
-    log({method});
-    log({target});
-    log({proto});
-    log(this.headers);
+  parseData = (data, type) => {
+    if (typeof type === 'undefined') {
+      type = 'request';
+    }
 
-    switch (method) {
-      case 'CONNECT':
-        this.parseTarget(this.target);
-      default:
-        return;
+    try {
+      const [headersRaw, body] = data.toString().split('\r\n\r\n');
+      const headers = headersRaw.split('\r\n');
+      const statusLine = headers[0];
+      const status = statusLine.split(' ', 3);
+
+      switch (method) {
+        case 'CONNECT':
+          this.parseTarget(this.target);
+          this.connect();
+        default:
+          this.method = method;
+          this.target = target;
+          this.proto = proto;
+          this.headers = parse(headers.slice(1).join('\r\n'));
+      }
+      return [method, target, proto];
+    } catch(error) {
+      log('parse error: ', error);
     }
   }
 
@@ -93,11 +105,13 @@ class Connection {
 
     this.originSocket.on('data', (data) => {
       log('---PROXY- Receiving message from client\n', data.toString());
+      this.parseRequest(data);
       this.targetSocket.write(data);
     });
 
     this.targetSocket.on('data', (data) => {
       log('---PROXY- Receiving message from server\n', data.toString());
+      this.parseResponse(data);
       this.originSocket.write(data);
     });
 
@@ -114,12 +128,6 @@ class Connection {
   onConnect = () => {
     log('sending back 200 ok');
     this.socket.write('HTTP/1.1 200 OK\r\n\r\n');
-//     this.targetSocket.write(`GET / HTTP/1.1
-// Host www.google.com
-
-// `);
-
-    // this.eve.on('data', msg => this.targetSocket.write(msg));
   }
 }
 
