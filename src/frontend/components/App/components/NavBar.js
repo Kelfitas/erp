@@ -29,6 +29,7 @@ const NavBar = (props) => {
     <div className={classes.root}>
       <AppBar
         position="fixed"
+        color="inherit"
         className={clsx(classes.appBar, {
           [classes.appBarShift]: open,
         })}

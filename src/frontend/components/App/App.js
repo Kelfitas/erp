@@ -1,13 +1,17 @@
 import React from 'react';
 import clsx from 'clsx';
-import './App.css';
 import NavBar from './components/NavBar';
 import Container from '@material-ui/core/Container';
-import Typography from '@material-ui/core/Typography';
-import Box from '@material-ui/core/Box';
-import Link from '@material-ui/core/Link';
 import { useTheme } from '@material-ui/core/styles';
 import { useStyles } from './styles';
+import Dashboard from 'frontend/scenes/Dashboard';
+import Repeater from 'frontend/scenes/Repeater';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link
+} from 'react-router-dom';
 
 // const electron = window.require('electron');
 // console.log(electron);
@@ -27,27 +31,28 @@ const App = () => {
 
   return (
     <div className="App">
-      <NavBar
-        classes={classes}
-        open={open}
-        setOpen={setOpen}
-        handleDrawerClose={handleDrawerClose}
-        handleDrawerOpen={handleDrawerOpen}
-      />
-      <main
-        className={clsx(classes.content, {
-          [classes.contentShift]: open,
-        })}
-      >
-        <div className={classes.drawerHeader} />
-        <Container maxWidth="sm">
-          <Box my={4}>
-            <Typography variant="h4" component="h1" gutterBottom align="center">
-              E R P
-            </Typography>
-          </Box>
-        </Container>
-      </main>
+      <Router>
+        <NavBar
+          classes={classes}
+          open={open}
+          setOpen={setOpen}
+          handleDrawerClose={handleDrawerClose}
+          handleDrawerOpen={handleDrawerOpen}
+        />
+        <main
+          className={clsx(classes.content, {
+            [classes.contentShift]: open,
+          })}
+        >
+          <div className={classes.drawerHeader} />
+          <Container>
+            <Switch>
+              <Route path="/"><Dashboard /></Route>
+              <Route path="/repeater/:id"><Repeater /></Route>
+            </Switch>
+          </Container>
+        </main>
+      </Router>
     </div>
   );
 }

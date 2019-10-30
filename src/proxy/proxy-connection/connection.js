@@ -13,8 +13,8 @@ const tlsServerOptions = {
 };
 
 class Data {
-  static const TYPE_IN = 0;
-  static const TYPE_OUT = 1;
+  static TYPE_REQ = 'req';
+  static TYPE_RES = 'res';
 
   constructor(data, type) {
     this.data = data;
@@ -26,14 +26,17 @@ class Connection {
   constructor(socket) {
     this.socket = socket;
     this.id = uuid();
-    this.buffer = Buffer.from('');
     this.data = [];
+    this.requestBuffer = Buffer.from('');
+    this.responseBuffer = Buffer.from('');
     this.eve = new EventEmitter();
 
     /** TCP/HTTP properties */
     this.method = null;
     this.target = null;
     this.proto = null;
+    this.statusCode = null;
+    this.statusText = null;
     this.headers = null;
     this.host = null;
     this.port = null;
@@ -42,42 +45,68 @@ class Connection {
     };
   }
 
+  on = (...props) => this.eve.on(...props);
+  emit = (...props) => this.eve.emit(...props);
+
   init = () => {
+    this.emit('init');
     this.socket.on('data', this.onMessage);
-    this.socket.on('close', () => log('close'));
-    this.socket.on('end', () => log('end'));
-    this.socket.on('drain', () => log('drain'));
-    this.socket.on('connect', () => log('connect'));
+    // this.socket.on('close', () => log('close'));
+    // this.socket.on('close', () => log('request: \n', this.requestBuffer.toString()));
+    // this.socket.on('close', () => log('response: \n', this.responseBuffer.toString()));
+    this.socket.on('close', () => {
+      this.emit('close', this.requestBuffer, this.responseBuffer);
+    });
   }
 
   onMessage = (data) => {
     log("---PROXY- got message:", "\n" + data.toString());
-    this.data.push(data);
     this.parseRequest(data);
   }
 
-  parseRequest = data => this.parseData(data, 'request');
-  parseResponse = data => this.parseData(data, 'response');
+  parseRequest = data => this.parseData(data, Data.TYPE_REQ);
+  parseResponse = data => this.parseData(data, Data.TYPE_RES);
 
   parseData = (data, type) => {
     if (typeof type === 'undefined') {
-      type = 'request';
+      type = Data.TYPE_REQ;
     }
 
     try {
       const [headersRaw, body] = data.toString().split('\r\n\r\n');
       const headers = headersRaw.split('\r\n');
       const statusLine = headers[0];
+      let method, target, proto, statusCode, statusText;
       const status = statusLine.split(' ', 3);
+
+      if (type === Data.TYPE_REQ) {
+        method = status[0];
+        target = status[1];
+        proto = status[2];
+        this.requestStatus = status;
+        // this.data.push(new Data(data, Data.TYPE_REQ));
+        if (method !== 'CONNECT') {
+          this.requestBuffer = Buffer.concat([this.requestBuffer, data]);
+        }
+      } else if (type === Data.TYPE_RES) {
+        proto = status[0];
+        statusCode = status[1];
+        statusText = status[2];
+        this.responseStatus = status;
+        // this.data.push(new Data(data, Data.TYPE_RES));
+        this.responseBuffer = Buffer.concat([this.responseBuffer, data]);
+      }
 
       switch (method) {
         case 'CONNECT':
-          this.parseTarget(this.target);
+          this.parseTarget(target);
           this.connect();
         default:
           this.method = method;
           this.target = target;
           this.proto = proto;
+          this.statusCode = statusCode;
+          this.statusText = statusText;
           this.headers = parse(headers.slice(1).join('\r\n'));
       }
       return [method, target, proto];
