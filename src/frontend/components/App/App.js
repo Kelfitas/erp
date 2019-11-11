@@ -45,12 +45,13 @@ const App = () => {
           })}
         >
           <div className={classes.drawerHeader} />
-          <Container>
+          {/* <Container> */}
             <Switch>
-              <Route path="/"><Dashboard /></Route>
-              <Route path="/repeater/:id"><Repeater /></Route>
+              {/* <Route path="/repeater/:id" exact><Repeater /></Route> */}
+              <Route path="/repeater/"><Repeater /></Route>
+              <Route path="/" exact><Dashboard /></Route>
             </Switch>
-          </Container>
+          {/* </Container> */}
         </main>
       </Router>
     </div>

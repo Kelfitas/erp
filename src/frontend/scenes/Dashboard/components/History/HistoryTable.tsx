@@ -12,11 +12,15 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
 import IconButton from '@material-ui/core/IconButton';
+import SendIcon from '@material-ui/icons/Send';
 import Tooltip from '@material-ui/core/Tooltip';
 import MuiLink from '@material-ui/core/Link';
 import FilterListIcon from '@material-ui/icons/FilterList';
 import { HttpKeys, DataRow, HttpHeaders } from 'frontend/types/connection';
 import { Link, useHistory } from 'react-router-dom';
+import { connect, useDispatch } from 'react-redux';
+import { addBulkDataIds, addDataId } from 'frontend/redux/actions/repeater';
+import { Dispatch } from 'redux';
 
 function desc<T>(a: T, b: T, orderBy: keyof T) {
   if (b[orderBy] < a[orderBy]) {
@@ -63,6 +67,8 @@ const headCells: headCell[] = [
   { id: 'statusMessage', numeric: false, disablePadding: false, label: 'Status Message', align: 'left' },
   { id: 'protocolVersion', numeric: false, disablePadding: false, label: 'Protocol Version', align: 'left' },
 ];
+
+type EventHandler = (event: React.MouseEvent<unknown>) => void;
 
 interface EnhancedTableHeadProps {
   classes: ReturnType<typeof useStyles>;
@@ -133,11 +139,12 @@ const useToolbarStyles = makeStyles((theme: Theme) =>
 
 interface EnhancedTableToolbarProps {
   numSelected: number;
+  onSendClick: EventHandler;
 }
 
 const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
   const classes = useToolbarStyles();
-  const { numSelected } = props;
+  const { numSelected, onSendClick } = props;
 
   return (
     <Toolbar
@@ -154,11 +161,19 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
           History
         </Typography>
       )}
-      <Tooltip title="Filter list">
-        <IconButton aria-label="filter list">
-          <FilterListIcon />
-        </IconButton>
-      </Tooltip>
+      {numSelected > 0 ? (
+        <Tooltip title="Delete" onClick={onSendClick}>
+          <IconButton aria-label="delete">
+            <SendIcon />
+          </IconButton>
+        </Tooltip>
+      ) : (
+        <Tooltip title="Filter list">
+          <IconButton aria-label="filter list">
+            <FilterListIcon />
+          </IconButton>
+        </Tooltip>
+      )}
     </Toolbar>
   );
 };
@@ -197,8 +212,9 @@ interface EnhancedTableProps {
   rows: DataRow[];
 }
 
-export default function EnhancedTable(props: EnhancedTableProps) {
+function EnhancedTable(props: EnhancedTableProps) {
   const { rows } = props;
+  const dispatch = useDispatch();
   const classes = useStyles();
   const history = useHistory();
   const [order, setOrder] = React.useState<Order>('asc');
@@ -224,6 +240,7 @@ export default function EnhancedTable(props: EnhancedTableProps) {
   };
 
   const handleClick = (event: React.MouseEvent<unknown>, name: string) => {
+    dispatch(addDataId(name));
     history.push(`/repeater/${name}`);
 
     const selectedIndex = selected.indexOf(name);
@@ -245,6 +262,11 @@ export default function EnhancedTable(props: EnhancedTableProps) {
     setSelected(newSelected);
   };
 
+  const handleSendToRepeater = (event: React.MouseEvent<unknown>) => {
+    dispatch(addBulkDataIds(selected));
+    history.push('/repeater/');
+  };
+
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
   };
@@ -261,7 +283,7 @@ export default function EnhancedTable(props: EnhancedTableProps) {
   return (
     <div className={classes.root}>
       <Paper className={classes.paper}>
-        <EnhancedTableToolbar numSelected={selected.length} />
+        <EnhancedTableToolbar numSelected={selected.length} onSendClick={handleSendToRepeater} />
         <div className={classes.tableWrapper}>
           <Table
             className={classes.table}
@@ -334,4 +356,6 @@ export default function EnhancedTable(props: EnhancedTableProps) {
       </Paper>
     </div>
   );
-}
+};
+
+export default EnhancedTable;

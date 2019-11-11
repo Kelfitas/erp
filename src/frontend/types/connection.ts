@@ -1,4 +1,4 @@
-export type HttpKeys = keyof HttpRequest | keyof HttpResponse | keyof HttpConnection;
+export type HttpKeys = keyof HttpRequest | keyof HttpResponse | keyof Connection;
 
 export interface HttpHeaders {
   any: string;
@@ -19,8 +19,31 @@ export interface HttpResponse {
   body: string;
 }
 
+interface Connection { id: string };
+interface JSONEncodedBuffer {
+  type: string;
+  data: Uint8Array;
+}
 export interface HttpConnection {
   id: string;
+  // headers
+  // proto: string;
+  // headers: any;
+  // host: string;
+  // port: string;
+
+  // data: any;
+  requestBuffer: JSONEncodedBuffer;
+  responseBuffer: JSONEncodedBuffer;
+
+  // requestStatus: any;
+  // responseStatus: any;
+
+  // eve: any;
+  // socket: any;
+  // tlsOptions: any;
+  // originSocket: any;
+  // targetSocket: any;
 }
 
 export interface Data {
@@ -29,7 +52,7 @@ export interface Data {
   res: HttpResponse;
 }
 
-export interface DataRow extends HttpRequest, HttpResponse, HttpConnection {}
+export interface DataRow extends HttpRequest, HttpResponse, Connection {}
 
 export const DataToDataRow = (data: Data[]) => {
    return data.map((d: Data) => ({

@@ -9,6 +9,7 @@ interface Data {
   isLoading: boolean;
   isError: boolean;
   setParams: React.Dispatch<React.SetStateAction<any[]>>;
+  setData: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 const useDataApi = (apiCallFunc: AxiosMethod, apiParams: any[], initialData: any): Data => {
@@ -37,7 +38,7 @@ const useDataApi = (apiCallFunc: AxiosMethod, apiParams: any[], initialData: any
     fetchData();
   }, params);
 
-  return { data, error, isLoading, isError, setParams } as Data;
+  return { data, error, isLoading, isError, setParams, setData } as Data;
 };
 
 export default useDataApi;

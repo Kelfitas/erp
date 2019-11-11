@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import Box from '@material-ui/core/Box';
+import React, { useState, useEffect, useMemo } from 'react';
 import api from 'frontend/lib/api';
 import HistoryTable from './HistoryTable';
 import { DataRow, Data, DataToDataRow } from 'frontend/types/connection';
