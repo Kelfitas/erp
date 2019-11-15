@@ -2,9 +2,9 @@ import React, { useMemo } from 'react';
 import useDataApi from 'frontend/hooks/use-data-api';
 import api from 'frontend/lib/api';
 import { useSelector, useDispatch } from 'react-redux';
-import TabbedView from 'frontend/components/TabbedView';
+import TabbedView, { TabsWrapperProps } from 'frontend/components/TabbedView';
 import { Data } from 'frontend/types/connection';
-import { TextField, makeStyles, createStyles, Theme, Divider, Grid, Typography } from '@material-ui/core';
+import { TextField, makeStyles, createStyles, Theme, Divider, Grid, Typography, Tooltip, Button, Toolbar, Icon } from '@material-ui/core';
 import { removeData } from 'frontend/redux/actions/repeater';
 import Editor from 'frontend/components/Editor';
 
@@ -34,6 +34,14 @@ const useStyles = makeStyles((theme: Theme) =>
       wordBreak: 'break-word',
       whiteSpace: 'pre-line',
       width: '50%',
+    },
+    grid: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      margin: theme.spacing(0, 1),
+    },
+    button: {
+      margin: theme.spacing(1),
     }
   }),
 );
@@ -56,10 +64,10 @@ function Tab(props: any) {
     setRequestValue(event.target.value);
   };
 
-  // const
+
 
   return (
-    <Grid container alignItems="center" className={classes.root}>
+    <Grid container className={classes.root}>
       <Editor
         requestValue={requestValue}
         handleChange={handleChange}
@@ -73,8 +81,34 @@ function Tab(props: any) {
 
 function Repeater() {
   const dispatch = useDispatch();
+  const classes = useStyles();
   const ids = useSelector((state: any) => state.repeater.ids);
   const { data, error, isLoading, isError, setData } = useDataApi(api.getHistoryList, [ids], []);
+  const dataList: Data[] = data;
+
+  const handleSubmit = useMemo(() => (event: React.MouseEvent<unknown>, index: number) => {
+    console.log(dataList);
+    const data = dataList[index];
+    console.log(data);
+
+  }, [dataList.length]);
+
+  const TabsWrapper = useMemo(() => {
+    return ({ children, value }: TabsWrapperProps) => (
+      <Grid className={classes.grid}>
+        {children}
+        <Button
+          variant="contained"
+          color="primary"
+          className={classes.button}
+          endIcon={<Icon>send</Icon>}
+          onClick={(e) => handleSubmit(e, value)}
+        >
+          Send
+        </Button>
+      </Grid>
+    );
+  }, [handleSubmit]);
 
   if (isError) {
     return ['Error!', JSON.stringify(error)];
@@ -84,7 +118,6 @@ function Repeater() {
     return 'Loading...';
   }
 
-  const dataList: Data[] = data;
   if (dataList.length === 0) {
     return 'There\'s nothing here :(';
   }
@@ -96,7 +129,11 @@ function Repeater() {
   };
 
   return (
-    <TabbedView includeTabCloseButton handleTabClose={handleTabClose}>
+    <TabbedView
+      TabsWrapper={TabsWrapper}
+      includeTabCloseButton
+      handleTabClose={handleTabClose}
+    >
       {dataList.map((data, index) => (
         <Tab data={data} index={index} key={data.connection.id} />
       ))}

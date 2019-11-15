@@ -1,5 +1,4 @@
 import { ADD_REPEATER_DATA, CLEAR_REPEATER_DATA, ADD_REPEATER_BULK_DATA, REMOVE_REPEATER_DATA } from 'frontend/redux/actionTypes';
-import { Data } from 'frontend/types/connection';
 
 export type RepeaterState = {
   readonly ids: ReadonlyArray<string>;

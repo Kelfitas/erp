@@ -7,6 +7,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 import IconButton from '@material-ui/core/IconButton';
+import { Paper } from '@material-ui/core';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -47,16 +48,28 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-interface ScrollableTabsButtonAutoProps {
+export interface TabsWrapperProps {
   children?: React.ReactNode;
-  includeTabCloseButton?: boolean;
-  handleTabClose: (event: React.MouseEvent<unknown>, index: number) => void;
+  value: number;
 }
 
-export default function ScrollableTabsButtonAuto(props: ScrollableTabsButtonAutoProps) {
+interface ScrollableTabsButtonAutoProps {
+  children?: React.ReactNode;
+  TabsWrapper?: React.ComponentType<TabsWrapperProps>;
+  includeTabCloseButton?: boolean;
+  handleTabClose: (event: React.MouseEvent<unknown>, index: number) => void;
+  onChange?: (event: React.ChangeEvent<unknown>, index: number) => void;
+}
+
+export default function ScrollableTabsButtonAuto({
+  children,
+  TabsWrapper = () => <></>,
+  includeTabCloseButton,
+  handleTabClose,
+  onChange,
+}: ScrollableTabsButtonAutoProps) {
   const classes = useStyles();
   const [value, setValue] = React.useState(0);
-  const { children, includeTabCloseButton, handleTabClose } = props;
 
   let tabs = null;
   let tabPanels = null;
@@ -90,23 +103,28 @@ export default function ScrollableTabsButtonAuto(props: ScrollableTabsButtonAuto
 
   const handleChange = (event: React.ChangeEvent<{}>, newValue: number) => {
     setValue(newValue);
+    if (typeof onChange !== 'undefined') {
+      onChange(event, newValue);
+    }
   };
 
   return (
     <div className={classes.root}>
-      <AppBar position="static" color="default">
-        <Tabs
-          value={value}
-          onChange={handleChange}
-          indicatorColor="primary"
-          textColor="primary"
-          variant="scrollable"
-          scrollButtons="auto"
-          aria-label="scrollable auto tabs example"
-        >
-          {tabs}
-        </Tabs>
-      </AppBar>
+      <Paper color="default">
+        <TabsWrapper value={value}>
+          <Tabs
+            value={value}
+            onChange={handleChange}
+            indicatorColor="secondary"
+            textColor="default"
+            variant="scrollable"
+            scrollButtons="auto"
+            aria-label="scrollable auto tabs example"
+          >
+            {tabs}
+          </Tabs>
+        </TabsWrapper>
+      </Paper>
       {tabPanels}
     </div>
   );
