@@ -1,7 +1,11 @@
 import { combineReducers } from 'redux';
-import repeater from './repeater';
+import repeater, { RepeaterState } from './repeater';
 
-export default combineReducers({
+export type State = {
+  repeater: RepeaterState;
+}
+
+export default combineReducers<State>({
   repeater
 });
 

@@ -1,12 +1,13 @@
 export type HttpKeys = keyof HttpRequest | keyof HttpResponse | keyof Connection;
 
 export interface HttpHeaders {
-  any: string;
+  [k: string]: string;
 }
 
 export interface HttpRequest {
   method: string;
   uri: string;
+  protocolVersion: string;
   headers: HttpHeaders;
   body: string;
 }

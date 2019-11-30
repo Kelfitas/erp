@@ -18,17 +18,18 @@ interface TabPanelProps {
 
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
+  const isHidden = (value !== index);
 
   return (
     <Typography
       component="div"
       role="tabpanel"
-      hidden={value !== index}
+      hidden={isHidden}
       id={`scrollable-auto-tabpanel-${index}`}
       aria-labelledby={`scrollable-auto-tab-${index}`}
       {...other}
     >
-      <Box p={3}>{children}</Box>
+      <Box>{children}</Box>
     </Typography>
   );
 }
@@ -63,7 +64,7 @@ interface ScrollableTabsButtonAutoProps {
 
 export default function ScrollableTabsButtonAuto({
   children,
-  TabsWrapper = () => <></>,
+  TabsWrapper = ({ children }) => <>{children}</>,
   includeTabCloseButton,
   handleTabClose,
   onChange,
@@ -110,7 +111,7 @@ export default function ScrollableTabsButtonAuto({
 
   return (
     <div className={classes.root}>
-      <Paper color="default">
+      <AppBar position="static" color="default">
         <TabsWrapper value={value}>
           <Tabs
             value={value}
@@ -124,7 +125,7 @@ export default function ScrollableTabsButtonAuto({
             {tabs}
           </Tabs>
         </TabsWrapper>
-      </Paper>
+      </AppBar>
       {tabPanels}
     </div>
   );

@@ -31,11 +31,16 @@ const History = () => {
   const data = useDataWsApi(memoizedInitialData);
 
   if (isError) {
-    return ['Error!', JSON.stringify(error)];
+    return (
+      <>
+        {'Error!'}
+        {JSON.stringify(error)}
+      </>
+    );
   }
 
   if (isLoading) {
-    return 'Loading...';
+    return (<>{'Loading...'}</>);
   }
 
 

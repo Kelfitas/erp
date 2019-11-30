@@ -1,48 +1,65 @@
-import { ADD_REPEATER_DATA, CLEAR_REPEATER_DATA, ADD_REPEATER_BULK_DATA, REMOVE_REPEATER_DATA } from 'frontend/redux/actionTypes';
+import {
+  ADD_REPEATER_REQUEST,
+  UPDATE_REPEATER_REQUEST,
+  REMOVE_REPEATER_REQUEST,
+  CLEAR_REPEATER_REQUESTS,
+} from 'frontend/redux/actionTypes';
+
+export type Request = {
+  readonly id: string;
+  readonly value: string;
+};
 
 export type RepeaterState = {
-  readonly ids: ReadonlyArray<string>;
+  readonly requests: ReadonlyArray<Request>;
 };
 
 export type RepeaterAction = {
   readonly type: string;
   readonly id: string;
   readonly idList: string[];
+  readonly index: number;
+  readonly request: Request;
 };
 
 const initialState: RepeaterState = {
-  ids: [],
+  requests: [],
 };
 
 export default function(
   state: RepeaterState = initialState,
   action: RepeaterAction
 ): RepeaterState {
-  console.log(state, action);
   switch (action.type) {
-    case ADD_REPEATER_DATA: {
-      return {
-        ...state,
-        ids: [...state.ids, action.id],
-      };
-    }
-    case ADD_REPEATER_BULK_DATA: {
-      return {
-        ...state,
-        ids: [...state.ids, ...action.idList],
-      };
-    }
-    case REMOVE_REPEATER_DATA: {
-      return {
-        ...state,
-        ids: state.ids.filter(id => id !== action.id),
-      };
-    }
-    case CLEAR_REPEATER_DATA: {
+    case CLEAR_REPEATER_REQUESTS: {
       return {
         ...initialState,
       };
     }
+    case ADD_REPEATER_REQUEST:
+      return {
+        ...state,
+        requests: [...state.requests, action.request],
+      };
+    case UPDATE_REPEATER_REQUEST:
+      const items = [...state.requests];
+      items[action.index] = {
+        ...items[action.index],
+        ...action.request,
+      };
+
+      return {
+        ...state,
+        requests: items,
+      };
+    case REMOVE_REPEATER_REQUEST:
+      return {
+        ...state,
+        requests: [
+          ...state.requests.slice(0, action.index),
+          ...state.requests.slice(action.index + 1),
+        ]
+      };
     default:
       return state;
   }

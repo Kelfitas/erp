@@ -27,5 +27,6 @@ const tryConnection = () => client.connect({port: port}, () => {
 tryConnection();
 
 client.on('error', (error) => {
+    console.log('err');
     setTimeout(tryConnection, 1000);
 });

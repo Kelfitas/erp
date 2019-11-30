@@ -19,7 +19,7 @@ import FilterListIcon from '@material-ui/icons/FilterList';
 import { HttpKeys, DataRow, HttpHeaders } from 'frontend/types/connection';
 import { Link, useHistory } from 'react-router-dom';
 import { connect, useDispatch } from 'react-redux';
-import { addBulkDataIds, addDataId } from 'frontend/redux/actions/repeater';
+import { addBulkRequestIds, addRequestId, addRequest } from 'frontend/redux/actions/repeater';
 import { Dispatch } from 'redux';
 
 function desc<T>(a: T, b: T, orderBy: keyof T) {
@@ -162,8 +162,8 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
         </Typography>
       )}
       {numSelected > 0 ? (
-        <Tooltip title="Delete" onClick={onSendClick}>
-          <IconButton aria-label="delete">
+        <Tooltip title="Send to repeater" onClick={onSendClick}>
+          <IconButton aria-label="Send to repeater">
             <SendIcon />
           </IconButton>
         </Tooltip>
@@ -240,9 +240,11 @@ function EnhancedTable(props: EnhancedTableProps) {
   };
 
   const handleClick = (event: React.MouseEvent<unknown>, name: string) => {
-    dispatch(addDataId(name));
-    history.push(`/repeater/${name}`);
+    dispatch(addRequestId(name));
+    history.push('/repeater/');
+  };
 
+  const handleRowClick = (event: React.MouseEvent<unknown>, name: string) => {
     const selectedIndex = selected.indexOf(name);
     let newSelected: string[] = [];
 
@@ -263,7 +265,7 @@ function EnhancedTable(props: EnhancedTableProps) {
   };
 
   const handleSendToRepeater = (event: React.MouseEvent<unknown>) => {
-    dispatch(addBulkDataIds(selected));
+    dispatch(addBulkRequestIds(selected));
     history.push('/repeater/');
   };
 
@@ -310,14 +312,14 @@ function EnhancedTable(props: EnhancedTableProps) {
                   return (
                     <TableRow
                       hover
-                      onClick={event => handleClick(event, row.id)}
                       // role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
                       key={row.id}
                       selected={isItemSelected}
+                      onClick={event => handleRowClick(event, row.id)}
                     >
-                      <TableCell component="th" id={labelId} scope="row" padding="default">
+                      <TableCell component="th" id={labelId} scope="row" padding="default" onClick={event => handleClick(event, row.id)}>
                         <MuiLink component={Link} to={`/repeater/${row.id}`}>
                           {row.id}
                         </MuiLink>

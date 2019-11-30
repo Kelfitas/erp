@@ -1,4 +1,4 @@
-import _ws from './ws';
+import WS from './ws';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { EventEmitter } from 'events';
 import { API_URL } from 'frontend/config/api';
@@ -12,17 +12,17 @@ type EventListener = (...args: any[]) => void;
 
 class Api {
   eve: EventEmitter;
-  ws: WebSocket;
+  ws: WS;
   axios: AxiosInstance;
 
-  constructor(ws: WebSocket) {
+  constructor() {
     this.eve = new EventEmitter();
-    this.ws = ws;
+    this.ws = new WS();
+    this.ws.connect();
     this.ws.onmessage = (...props) => this.emit('message', ...props);
     this.axios = axios.create({
       baseURL: API_URL,
-      timeout: 1000,
-      headers: {'X-Custom-Header': 'foobar'}
+      timeout: 30 * 1000,
     });
   }
 
@@ -42,4 +42,4 @@ class Api {
   repeat = (id: string, data: string) => this.post(REPEAT_URL.replace(':id', id), { data });
 }
 
-export default new Api(_ws);
+export default new Api();

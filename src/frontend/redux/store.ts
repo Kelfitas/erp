@@ -1,5 +1,7 @@
-import { createStore } from 'redux';
-import rootReducer from './reducers';
+import { createStore, applyMiddleware } from 'redux';
+import thunk, { ThunkMiddleware } from 'redux-thunk';
+import rootReducer, { State } from './reducers';
+import ActionTypes from 'frontend/types/actions';
 
 let initialState = {};
 try {
@@ -8,4 +10,11 @@ try {
   // pass
 }
 
-export default createStore(rootReducer, initialState);
+const store = createStore(
+  rootReducer,
+  initialState as State,
+  applyMiddleware(thunk as ThunkMiddleware<State, ActionTypes>)
+);
+
+// export default createStore(rootReducer, initialState);
+export default store;

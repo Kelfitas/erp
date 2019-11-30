@@ -3,6 +3,7 @@ const parser = require('http-string-parser');
 const express = require('express');
 const cors = require('cors');
 const net = require('net');
+const tls = require('tls');
 
 const app = express();
 const expressWs = require('express-ws')(app);
@@ -10,66 +11,102 @@ const expressWs = require('express-ws')(app);
 app.use(cors());
 app.use(express.json());
 
-app.get('/api/getHistory', (req, res) => {
-  const connectionsDict = manager.getAll();
+app.get('/api/getHistory', async (req, res) => {
+  const connectionsDict = await manager.getAll();
   const connections = Object.keys(connectionsDict).map(k => connectionsDict[k]);
 
-  res.send(JSON.stringify(connections.map(c => ({
-    connection: c,
-    req: c.requestBuffer && parser.parseRequest(c.requestBuffer.toString()),
-    res: c.responseBuffer && parser.parseResponse(c.responseBuffer.toString()),
-  }))));
+  res.send(JSON.stringify(connections.map(c => c.toSerializableObject())));
   res.end();
 });
 
-app.get('/api/getHistory/:id', (req, res) => {
-  const c = manager.get(req.params.id);
-  res.send(JSON.stringify(({
-    connection: c,
-    req: c.requestBuffer && parser.parseRequest(c.requestBuffer.toString()),
-    res: c.responseBuffer && parser.parseResponse(c.responseBuffer.toString()),
-  })));
+app.get('/api/getHistory/:id', async (req, res) => {
+  const c = await manager.get(req.params.id);
+  res.send(c.json());
   res.end();
 });
 
-app.post('/api/getHistoryList', (req, res) => {
+app.post('/api/getHistoryList', async (req, res) => {
   const ids = req.body.data || [];
-  const connectionsDict = manager.getAll();
+  const connectionsDict = await manager.getAll();
   const connections = Object.keys(connectionsDict)
     .map(k => connectionsDict[k])
     .filter(con => ids.indexOf(con.id) !== -1);
 
-  res.send(JSON.stringify(connections.map(c => ({
-    connection: c,
-    req: c.requestBuffer && parser.parseRequest(c.requestBuffer.toString()),
-    res: c.responseBuffer && parser.parseResponse(c.responseBuffer.toString()),
-  }))));
+  res.send(JSON.stringify(connections.map(c => c.toSerializableObject())));
   res.end();
 });
 
 app.post('/api/repeat/:id', async (req, res) => {
   const MAX_WAIT = 1000 * 30;
-  const c = manager.get(req.params.id);
+  const c = await manager.get(req.params.id);
   console.log(c.host);
   console.log(c.port);
-  console.log(req.body.data);
-  if (c.port === 443) {
-    c.targetSocket = tls.connect(c.port, c.host, c.tlsOptions, c.onConnectTLS);
+  console.log('%s', req.body.data.replace(/\r/g, '\\r').replace(/\n/g, '\\n\n'));
+  let targetSocket;
+  let pConnect;
+  if (c.isSSL) {
+    pConnect = new Promise((resolve) => {
+      targetSocket = tls.connect(c.port, c.host, c.tlsOptions, () => {
+        console.log('on connect tls');
+        console.log('client connected',
+                  targetSocket.authorized ? 'authorized' : 'unauthorized');
+        process.stdin.pipe(targetSocket);
+        process.stdin.resume();
+        resolve();
+      });
+    });
   } else {
-    c.targetSocket = new net.Socket();
-    c.targetSocket.connect(c.port, c.host, c.onConnect);
+    targetSocket = new net.Socket();
+    pConnect = new Promise((resolve) => {
+      targetSocket.connect(c.port, c.host, () => {
+        console.log('on connect');
+        resolve();
+      });
+    });
   }
 
   try {
-    c.targetSocket.write(req.body.data);
+    await pConnect;
+    targetSocket.write(req.body.data);
 
     const rawResponse = await new Promise((resolve, reject) => {
-      c.targetSocket.on('data', resolve);
-      c.targetSocket.on('error', reject);
-      setTimeout(() => {
+      let d = '';
+      let i = 0;
+      let to;
+      const appendData = (data) => {
+        console.log('=====================================================');
+        console.log('NEW DATA: ', data.toString());
+        console.log('=====================================================');
+        d += data.toString();
+        if (i === 0) {
+          let [headers, body] = d.split('\r\n\r\n');
+          let [_len, _body] = body.split('\r\n', 2);
+          const len = parseInt(_len, 16);
+          body = _body;
+          const response = parser.parseResponse(headers);
+          const contentLength = parseInt(response.headers['Content-Length'], 10);
+          // console.log('response', response);
+          // console.log('d.length: ', d.length);
+          // console.log('body: ', body);
+          // console.log('body.length: ', body.length);
+          // console.log('len: ', len);
+          if (len <= body.length) {
+            // console.log('RESOLVE!!!');
+            clearTimeout(to);
+            resolve([headers, body].join('\r\n\r\n'));
+          }
+        }
+      };
+      targetSocket.on('data', appendData);
+      targetSocket.on('error', reject);
+      // targetSocket.on('close', () => console.log('close') || resolve(d));
+      to = setTimeout(() => {
         reject('timedout');
       }, MAX_WAIT);
     });
+    // console.log('=====================================================');
+    // console.log('res.send: ', rawResponse);
+    // console.log('=====================================================');
     res.send(rawResponse);
   } catch(err) {
     res.status(500);

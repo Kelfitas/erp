@@ -1,5 +1,5 @@
 // Modules to control application life and create native browser window
-const { app, BrowserWindow } = require('electron');
+const { app, globalShortcut, BrowserWindow } = require('electron');
 const path = require('path');
 const url = require('url');
 const fork = require('child_process').fork;
@@ -31,11 +31,11 @@ const createWindow = () => {
     }
   });
 
-  const child = forkProxy();
-  child.on('message', message => {
-    log('message from child:', message);
-    child.send('Pong');
-  });
+  // const child = forkProxy();
+  // child.on('message', message => {
+  //   log('message from child:', message);
+  //   child.send('Pong');
+  // });
 
   // and load the index.html of the app.
   const startUrl = process.env.ELECTRON_START_URL || url.format({
@@ -49,13 +49,13 @@ const createWindow = () => {
 
   process.once('SIGTERM', function (code) {
     log('SIGTERM received...');
-    child.send(MSG_EXIT);
+    // child.send(MSG_EXIT);
     process.exit();
   });
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
-    child.send(MSG_EXIT);
+    // child.send(MSG_EXIT);
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
